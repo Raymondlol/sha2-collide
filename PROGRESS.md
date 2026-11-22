@@ -57,4 +57,11 @@ All runs on `g916` (AMD Ryzen 9 9950X3D 16C/32T, 61 GiB RAM, 1× NVIDIA RTX 5090
     - Throughput: **`273.58 G pairs/s` wall-clock** (**`480.0 G pairs/s` pure Phase 2**), **`66.04 k full Step-18/s`** (**`2.11×` speedup over v1**, `P(s18 | pre) = 2^{-15.72}` exact).
     - Live tail progression: `s18=1,320,815 -> s19=18,637 (2^{-6.15}) -> s20=85 (2^{-7.78}) -> s21=37 -> s22=21`.
     - **Measured Expected Time to World-First 36-Step Standard-IV SHA-512 Collision: `10.23 HOURS` (`0.43 days`, median 50% hit = `7.09 hours`)!!**
+
+### Exact 4B-Sample Tail Calibration (`60ddcec`, 2.7s on 32T CPU)
+- Row 23 (`W21`): `11.5114 ± 0.0012b` (`1,370,221 / 4e9`); Row 25 (`W23`): `3.8301 ± 0.0001b` (exact `-log2(9/128)`).
+- Joint `Row 25 | Row 23` with real constrained `W16/W8/W7`: `3.8243 ± 0.0046b` (zero negative correlation).
+- Unconstrained Steps 19–22 (`487.7M` real transitions): `16.1900 ± 0.0179b` (`17.7%` `E17` carries -> `+0.35b` vs fixed-`E17` estimate).
+- **Exact total tail after Step 18: `31.5315 ± 0.0179` bits** (`95% CI: [31.4957, 31.5673]`) -> RTX 5090 v2 (`66.04 k s18/s`): **`13.06 h`** expected (`9.05 h` median).
+
 - [ ] Launch full checkpointed `gpu-run` collision search (`./src/gpu/sha512_36_t14_gpu --search --seed 0`).
