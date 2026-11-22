@@ -12,7 +12,7 @@
 \newcommand{\hx}[1]{\texttt{#1}}
 \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single,columns=fullflexible}
 
-\title{A Practical Collision for 36-Step SHA-512\\[2pt]\large (Draft --- not for distribution)}
+\title{A Practical Collision for 36-Step SHA-512}
 \author{Junhong Huang\\ Boston University \quad \href{mailto:raymxnd@bu.edu}{\texttt{raymxnd@bu.edu}}}
 \date{22 November 2026}
 
@@ -107,6 +107,8 @@ E_{16} = \ell \boxplus h_E, \qquad A_{16} = \ell \boxplus h_A, \qquad \ell := \s
 \]
 where $\ell$ depends only on the lower part, and $h_E,h_A$ depend only on the upper part. The bit conditions on $E_{16}$ and $A_{16}$ therefore turn into a matching problem on $\ell\boxplus h$. We sort the $2^{25}$ upper candidates by a 19-bit key on $h$, and file each lower candidate under the corresponding key on $\ell$. The key consists of 1~exact bit ($E_{16}[0]$); 7~bits from three carry-guarded slices ($E_{16}[15..16]$, $[17..18]$, $[36..38]$); 10~bits of $E_{16}$ predicted modulo carries; and $A_{16}[59]$. Of the $2^{19}$ buckets, 61{,}365 are non-empty. With at most 64 lower candidates per bucket, the hot table is about 30\,MB and stays in the L2 cache of the GPUs used (96\,MB on the RTX~5090). It captures 99.0\% of the lower candidates that hit a non-empty bucket.
 
+The 19 key bits are not 19 conditions of the characteristic: the guard bits of the slices and the bits predicted modulo carries also reject some valid pairs. Per golden $M_0$, matching reduces the $2^{24.3}\cdot 2^{25}=2^{49.3}$ lower--upper combinations to about $2^{30.3}$ enumerated pairs, while the density of solutions among them rises by only about $2^{8.7}$ (Table~\ref{tab:gap}). Roughly $2^{-10.3}$ of the valid pairs of each golden $M_0$ are thus kept. This costs little, because a new golden $M_0$ takes only 0.02\% of the running time.
+
 \subsection{Filtering pipeline and cost model}
 
 Every pair of a lower and an upper candidate in the same bucket goes through these filters in order:
@@ -126,7 +128,7 @@ The two message-only factors were calibrated by Monte Carlo with $4\cdot 10^9$ s
 
 \paragraph{Setup.} Three GPUs ran disjoint ranges of first-block seeds: one GeForce RTX~5090 (32\,GB) and two RTX~PRO~6000 Blackwell Server Edition. The code is a single CUDA program compiled for \texttt{sm\_120}. Measured throughput was 272.6\,G pairs/s and 65.8\,k step-18 survivors/s on the RTX~5090, and 253.5\,G pairs/s and 61.2\,k survivors/s on each RTX~PRO~6000. At this rate the model predicts 13.1~h on the RTX~5090 alone and 4.6~h on all three GPUs together.
 
-\paragraph{Outcome.} The RTX~5090 found the collision after 10{,}113\,s (2.81\,h). By then the two other GPUs had run for about 10{,}950\,s each, so the total effort was about 8.9 GPU-hours. Table~\ref{tab:stats} lists the counters. Up to the collision, about $2.0\cdot 10^9$ step-18 survivors had been processed. That is 65\% of the expected $2^{31.53}$, close to the median of $\ln 2\approx 69\%$. Table~\ref{tab:model} compares the model with the observations.
+\paragraph{Outcome.} The RTX~5090 found the collision after 10{,}113\,s (2.81\,h). By then the two other GPUs had run for about 10{,}950\,s each, so the total effort was about 8.9 GPU-hours. Table~\ref{tab:stats} lists the counters. Up to the collision, about $2.0\cdot 10^9$ step-18 survivors had been processed. That is 65\% of the expected $2^{31.53}$, close to the median of $\ln 2\approx 69\%$. Table~\ref{tab:model} compares the model with the observations. Our pair has $W_{14}=W_{14}^{\mathrm{ref}}\boxminus 2^{40}$, where $W_{14}^{\mathrm{ref}}$ is the value in~\cite[Table~14]{LZLLQZ26}; its $A_{14}$ differs from the one in that pair only in bit~40. It therefore lies outside the $2^{21}$ upper candidates counted in~\cite{LZLLQZ26}, which keep $W_{14}=W_{14}^{\mathrm{ref}}$.
 
 \begin{table}[h]
 \centering
@@ -257,7 +259,7 @@ The largest share comes from the standard meet-in-the-middle matching. The origi
 
 36-step SHA-512 with the standard IV is now practically broken: the collision took about 3~hours on three commodity Blackwell GPUs. The measured pass rates agree with the cost model to within statistical error. Full SHA-512 has 80 steps, and this result has no implication for its security. The next steps of the same family, 37~steps at $2^{87}$ and 38~steps at $2^{125.4}$~\cite{LZLLQZ26}, are outside the reach of the techniques used here; we have not tested whether similar refinements reduce those estimates.
 
-\paragraph{Data availability.} The CUDA search code, the CPU audit, the compression benchmark and the verification script are available at \url{https://github.com/Raymondlol/sha2-collide}. \todo{The repository is currently private; make it public before posting.}
+\paragraph{Data availability.} The CUDA search code, the CPU audit, the compression benchmark and the verification script are available at \url{https://github.com/Raymondlol/sha2-collide}.
 
 \begin{thebibliography}{99}
 \bibitem{DEM15} C.~Dobraunig, M.~Eichlseder, F.~Mendel. Analysis of SHA-512/224 and SHA-512/256. ASIACRYPT 2015, LNCS, pp.~612--630. Springer, 2015.

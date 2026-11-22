@@ -6,7 +6,7 @@ The search ran on one RTX 5090 together with two RTX PRO 6000 (Blackwell). The R
 
 This is a practical instantiation of an existing attack, not a new one. It uses the 36-step differential characteristic, the message-difference pattern and the memory-efficient two-block framework of Li et al. ([ePrint 2026/1120](https://eprint.iacr.org/2026/1120), [ePrint 2026/1080](https://eprint.iacr.org/2026/1080)). It also reuses the internal-state solution of their published 36-step semi-free-start pair (2026/1120, Table 14). The paper estimates the attack at 2^66.2.
 
-Write-up: [`paper/sha512-36step-collision-draft.pdf`](paper/sha512-36step-collision-draft.pdf), LaTeX source in `paper/`.
+Write-up: [`paper/sha512-36step-collision.pdf`](paper/sha512-36step-collision.pdf), LaTeX source in `paper/`.
 
 ## Context: collision attacks on step-reduced SHA-512 (standard IV)
 
@@ -88,7 +88,7 @@ cores/        Table 14 constants, verifiers, tail calibration counter
 results/      the colliding pair (JSON) and a verifier
 audit/        independent CPU audit of the tail model
 bench/        36-step compression throughput benchmark
-paper/        preprint draft (LaTeX + PDF) and appendix verifier
+paper/        preprint (LaTeX + PDF) and appendix verifier
 papers/       links to the reference papers (PDFs not redistributed)
 archive/      earlier audit notes
 PROGRESS.md   chronological log
