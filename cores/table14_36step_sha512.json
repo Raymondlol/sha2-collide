@@ -1,0 +1,60 @@
+{
+  "name": "ePrint-2026-1120-Table14-36step-SHA512",
+  "source": "Li et al., Pushing Collision Attacks on SHA-2 to 39 Steps (ePrint 2026/1120), Table 14, p. 27",
+  "steps": 36,
+  "alignment": "i=1 (active W5..W9, W13, W14, W21, W23; k=59)",
+  "CV": [
+    "0xf128698fe95be8ac", "0x264034c8f44fe6ed", "0x7b976a39ced01663", "0x7b671a27b6f1da99",
+    "0x198021f679057203", "0x600969ddc8027d0c", "0x4af8d8a11db1692b", "0x98ba089bc0dee788"
+  ],
+  "M1": [
+    "0x230a4930d38229e3", "0x2b3c63372261608b", "0xf833951c32f2b6dc", "0x6f4f49447a93b0cc",
+    "0xf841e91df9c8d69e", "0xa4710d44716286a3", "0xe3310abbec7a9816", "0x66b0241d0bfd564c",
+    "0x5395fbd4a70df9f3", "0xb0f8774e493b43bc", "0x13287fa0a341d877", "0xf0d19e5ae32f6abf",
+    "0xf26d943cf8041873", "0x06f2b17bb37eb2b7", "0x2cccf19ec39c66dd", "0xf284ae681c043be9"
+  ],
+  "M2": [
+    "0x230a4930d38229e3", "0x2b3c63372261608b", "0xf833951c32f2b6dc", "0x6f4f49447a93b0cc",
+    "0xf841e91df9c8d69e", "0xac710d44716286a3", "0xe7390abbec7a9816", "0x6eb0241d0bfd564c",
+    "0x73c5db55a70df9f3", "0xf0d8764e493b43bc", "0x13287fa0a341d877", "0xf0d19e5ae32f6abf",
+    "0xf26d943cf8041873", "0x02fab17bb37eb2b7", "0x24ccf19ec39c66dd", "0xf284ae681c043be9"
+  ],
+  "expected_hash": [
+    "0xf121c6371d1f7dae", "0x18b855b541505aca", "0x66f9907c6a62d593", "0xf9053b45c041d782",
+    "0x096ecf2650626b26", "0xfa00b8af66c6af89", "0xd3c534d9fe0f249d", "0xc2f16b3fcbc3032d"
+  ],
+  "verified_freedom": {
+    "upper_W14_valid": 16,
+    "upper_W14_free_bits": [28, 40, 62, 63],
+    "upper_W15_valid_per_W14": 2097152,
+    "upper_total_N_U": 33554432,
+    "upper_log2_N_U": 25.0,
+    "lower_E4_free_bits_29": [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 23, 24, 27, 28, 29, 34, 35, 36, 63],
+    "lower_golden_M0_prob_bits": 14.0,
+    "lower_E4_pass_rate_on_golden_M0": 0.0462,
+    "lower_valid_per_golden_M0_log2": 24.56
+  },
+  "verified_tail_bits": {
+    "step17_dE17_and_dA17": 15.0,
+    "step18_dE18_and_dA18": 16.0,
+    "step19_E18_and_E18_59": 7.0,
+    "step20_E19": 6.84,
+    "step21_E20_59": 1.0,
+    "step22_E21_59": 1.0,
+    "row23_W21_s1": 11.51,
+    "row25_W23_s1": 3.83,
+    "total_raw_steps_17_35": 62.18,
+    "remaining_after_step17": 47.18,
+    "remaining_after_step18": 31.18
+  },
+  "s17_key_spec": {
+    "E16_direct_bits": [0, 2, 10, 16, 18, 25, 29, 33, 37, 38, 41, 45],
+    "E16_direct_targets": [0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
+    "E16_xor_pairs_zero": [[8, 49], [55, 59]],
+    "A16_bit59_target": 0,
+    "recommended_gpu_k": 19,
+    "recommended_gpu_g_guards": 6,
+    "recommended_L2_table_entries": 8388608,
+    "recommended_L2_table_bytes": 67108864
+  }
+}

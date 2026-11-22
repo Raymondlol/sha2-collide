@@ -1,0 +1,20 @@
+# Compiled binaries & build artifacts
+*.o
+*.out
+*.ptx
+*.cubin
+src/gpu/bench_phase1_gpu
+src/gpu/sha512_36_gpu
+src/gpu/sha512_36_t14_gpu
+src/sat/expand_t14_upper
+src/sat/expand_t14_v2
+src/sat/check_t14_freedom
+
+# Runtime logs, checkpoints, symlinks, Python cache
+__pycache__/
+*.pyc
+runs/
+tools
+*.log
+*.ckpt
+EOF'
