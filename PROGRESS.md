@@ -65,3 +65,18 @@ All runs on `g916` (AMD Ryzen 9 9950X3D 16C/32T, 61 GiB RAM, 1× NVIDIA RTX 5090
 - **Exact total tail after Step 18: `31.5315 ± 0.0179` bits** (`95% CI: [31.4957, 31.5673]`) -> RTX 5090 v2 (`66.04 k s18/s`): **`13.06 h`** expected (`9.05 h` median).
 
 - [ ] Launch full checkpointed `gpu-run` collision search (`./src/gpu/sha512_36_t14_gpu --search --seed 0`).
+
+## Phase 5 — Production Search & WORLD-FIRST COLLISION ACHIEVED! (2026-11-22)
+
+- [x] Deployed `v2` (`ab7c13a`) across 3 Blackwell GPUs with disjoint seed spaces:
+  - `server-B` GPU 1 (RTX PRO 6000 Blackwell Server Edition, `--seed 0`): `11,220.4s` (`3.12h`), `2,170,000` GM0s, `686,216,835` s18 (`61.16 k/s`), `9,115` s22, `W21=1`, `W23=0`
+  - `server-B` GPU 3 (RTX PRO 6000 Blackwell Server Edition, `--seed 1000000000000`): `11,215.4s` (`3.12h`), `2,170,000` GM0s, `686,137,818` s18 (`61.18 k/s`), `9,131` s22, `W21=3`, `W23=0`
+  - `g916` GPU 0 (RTX 5090, `--seed 2000000000000`): **`10,113.01s` (`2.81h`), `2,102,288` GM0s, `665,107,101` s18 (`65.77 k/s`), `8,845` s22, `W21=5`, `W23=1`, `COL=1`!!**
+- [x] **Combined Effort at Discovery**: **`9.04 GPU-hours`** (`~3.1 h` wall-clock), `2,037,461,754` Step-18 passes (`65.6%` of mean `3.105B`, right at median `2.15B`), `27,091` Step-22 passes -> `9` `W21` hits (`2^{-11.55}`, matching 4B-sample calibration `2^{-11.5114}` to `0.04` bits!) -> `1` `W23` hit -> **1 REAL COLLISION**.
+- [x] **Independent Clean-Room Verification (`results/verify_world_first.py`)**: **5/5 PASS**:
+  1. Prime-derived FIPS 180-4 80-round SHA-512 matches `hashlib.sha512` bit-for-bit on 4 vectors (`""`, `"abc"`, `M0||M1`, `M0||M2`).
+  2. `F_36(Standard_IV, M0) == CV` (`m0_seed = 2068887288786`, `M0` tag `"SHA51236COLLIDE!"`).
+  3. `M1 != M2` (7 differing words `[5, 6, 7, 8, 9, 13, 14]`), `F_36(CV, M1) == F_36(CV, M2) == 7f987d4f13fdfebe...`.
+  4. Full FIPS 180-4 padded 256-byte message collision: `SHA512_36(M0 || M1) == SHA512_36(M0 || M2) == 9eabd799baf71c41...`.
+  5. State differential active steps `6..23`, zero identically from step `24..36`.
+- [x] Permanently archived in `results/collision_36step_sha512_std_iv.json` & `results/verify_world_first.py`; all 3 GPUs cleanly stopped (`0%` idle).
