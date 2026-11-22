@@ -17,4 +17,9 @@ runs/
 tools
 *.log
 *.ckpt
-EOF'
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
