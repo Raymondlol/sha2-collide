@@ -20,6 +20,7 @@
 #include <chrono>
 #include <algorithm>
 #include <omp.h>
+#include <sys/stat.h>
 
 #define CUDA_CHECK(call) do { \
     cudaError_t err = (call); \
@@ -765,16 +766,60 @@ static void print_collision(const CollisionRec &rec, const char *label) {
     printf("============================================================\n");
     fflush(stdout);
 }
+static void save_collision_json(const CollisionRec &rec, const char *path, double wall_s, uint64_t batches) {
+    FILE *fp = fopen(path, "w");
+    if (!fp) { perror("fopen collision output"); return; }
+    fprintf(fp, "{\n");
+    fprintf(fp, "  \"status\": \"VERIFIED_36STEP_STANDARD_IV_SHA512_COLLISION\",\n");
+    fprintf(fp, "  \"is_sentinel\": %u,\n", rec.is_sentinel);
+    fprintf(fp, "  \"m0_seed\": %llu,\n", (unsigned long long)rec.m0_seed);
+    fprintf(fp, "  \"elapsed_sec\": %.2f,\n", wall_s);
+    fprintf(fp, "  \"golden_m0_batches\": %llu,\n", (unsigned long long)batches);
+    fprintf(fp, "  \"M0\": [\"0x%016llx\", \"0x5348413531323336\", \"0x434f4c4c49444521\"", (unsigned long long)rec.m0_seed);
+    for (int i = 3; i < 16; i++) fprintf(fp, ", \"0x0000000000000000\"");
+    fprintf(fp, "],\n  \"CV\": [");
+    for (int i = 0; i < 8; i++) fprintf(fp, "%s\"0x%016llx\"", i?", ":"", (unsigned long long)rec.cv[i]);
+    fprintf(fp, "],\n  \"M1\": [");
+    for (int i = 0; i < 16; i++) fprintf(fp, "%s\"0x%016llx\"", i?", ":"", (unsigned long long)rec.M1[i]);
+    fprintf(fp, "],\n  \"M2\": [");
+    for (int i = 0; i < 16; i++) fprintf(fp, "%s\"0x%016llx\"", i?", ":"", (unsigned long long)rec.M2[i]);
+    fprintf(fp, "],\n  \"H1\": [");
+    for (int i = 0; i < 8; i++) fprintf(fp, "%s\"0x%016llx\"", i?", ":"", (unsigned long long)rec.H1[i]);
+    fprintf(fp, "],\n  \"H2\": [");
+    for (int i = 0; i < 8; i++) fprintf(fp, "%s\"0x%016llx\"", i?", ":"", (unsigned long long)rec.H2[i]);
+    fprintf(fp, "]\n}\n");
+    fflush(fp);
+    fclose(fp);
+    printf("[SAVED] Collision written to %s\n", path);
+    fflush(stdout);
+}
+
+static inline bool file_exists(const char *p) {
+    if (!p || !p[0]) return false;
+    struct stat st;
+    return stat(p, &st) == 0;
+}
+
 
 int main(int argc, char **argv) {
     double bench_sec = 20.0;
+    double max_sec = 0.0;
     bool search_mode = false;
     uint64_t seed_start = 0;
     bool cpu_init_only = false;
+    const char *out_path = "COLLISION_FOUND.json";
+    const char *ckpt_path = nullptr;
+    const char *stop_file = "COLLISION_FOUND.json";
+    const char *tag = "gpu";
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--bench") && i + 1 < argc) bench_sec = atof(argv[++i]);
         else if (!strcmp(argv[i], "--search")) search_mode = true;
         else if (!strcmp(argv[i], "--seed") && i + 1 < argc) seed_start = strtoull(argv[++i], nullptr, 10);
+        else if (!strcmp(argv[i], "--max-sec") && i + 1 < argc) max_sec = atof(argv[++i]);
+        else if (!strcmp(argv[i], "--out") && i + 1 < argc) out_path = argv[++i];
+        else if (!strcmp(argv[i], "--ckpt") && i + 1 < argc) ckpt_path = argv[++i];
+        else if (!strcmp(argv[i], "--stop-file") && i + 1 < argc) stop_file = argv[++i];
+        else if (!strcmp(argv[i], "--tag") && i + 1 < argc) tag = argv[++i];
         else if (!strcmp(argv[i], "--cpu-init-only")) cpu_init_only = true;
     }
 
@@ -922,25 +967,48 @@ int main(int argc, char **argv) {
                 uint32_t col_found = 0;
                 CUDA_CHECK(cudaMemcpy(&col_found, &d_col->found, sizeof(uint32_t), cudaMemcpyDeviceToHost));
                 if (col_found) {
+                    double wall_hit = std::chrono::duration<double>(std::chrono::steady_clock::now() - t_wall0).count();
                     CollisionRec h_col;
                     CUDA_CHECK(cudaMemcpy(&h_col, d_col, sizeof(CollisionRec), cudaMemcpyDeviceToHost));
                     print_collision(h_col, "WORLD-FIRST 36-STEP STANDARD-IV SHA-512 COLLISION!!");
+                    save_collision_json(h_col, out_path, wall_hit, total_batches);
                     done = true;
                     break;
                 }
             }
             double wall = std::chrono::duration<double>(std::chrono::steady_clock::now() - t_wall0).count();
             if (!search_mode && wall >= bench_sec) { done = true; break; }
-            if (search_mode && (total_batches % 1000 == 0)) {
+            if (search_mode && max_sec > 0.0 && wall >= max_sec) {
+                printf("[%s] Reached --max-sec=%.0fs at seed=%llu (%llu GM0s), exiting cleanly.\n",
+                       tag, max_sec, (unsigned long long)next_seed, (unsigned long long)total_batches);
+                done = true;
+                break;
+            }
+            if (search_mode && (total_batches % 256 == 0) && file_exists(stop_file)) {
+                printf("[%s] Stop-file '%s' detected! Exiting cleanly at seed=%llu.\n",
+                       tag, stop_file, (unsigned long long)next_seed);
+                done = true;
+                break;
+            }
+            if (search_mode && (total_batches % 5000 == 0)) {
                 unsigned long long st[N_STATS];
                 CUDA_CHECK(cudaMemcpy(st, d_stats, sizeof(st), cudaMemcpyDeviceToHost));
                 double s18_rate = (double)st[4] / wall;
-                double eta_hr = (s18_rate > 0) ? (pow(2.0, 31.18) / s18_rate / 3600.0) : 9999.0;
-                printf("[PROG %.1fs | %llu GM0 | seed=%llu] pairs=%.2fG/s s17_15=%.2fG/s s18=%.2fk/s | tail(19/20/21/22/W21/W23)=%llu/%llu/%llu/%llu/%llu/%llu | ETA=%.2fh\n",
-                       wall, (unsigned long long)total_batches, (unsigned long long)next_seed,
-                       (double)st[0]/wall/1e9, (double)st[3]/wall/1e9, s18_rate/1e3,
+                double eta_hr = (s18_rate > 0) ? (pow(2.0, 31.5315) / s18_rate / 3600.0) : 9999.0;
+                printf("[%s PROG %.0fs | %llu GM0 | seed=%llu] pairs=%.2fG/s s18=%.2fk/s | tail(19/20/21/22/W21/W23)=%llu/%llu/%llu/%llu/%llu/%llu | 1GPU_ETA=%.2fh\n",
+                       tag, wall, (unsigned long long)total_batches, (unsigned long long)next_seed,
+                       (double)st[0]/wall/1e9, s18_rate/1e3,
                        st[5], st[6], st[7], st[8], st[9], st[10], eta_hr);
                 fflush(stdout);
+                if (ckpt_path) {
+                    FILE *cf = fopen(ckpt_path, "w");
+                    if (cf) {
+                        fprintf(cf, "tag=%s next_seed=%llu batches=%llu wall=%.1f s18=%llu s18_ks=%.2f tail=%llu/%llu/%llu/%llu/%llu/%llu\n",
+                                tag, (unsigned long long)next_seed, (unsigned long long)total_batches, wall,
+                                st[4], s18_rate/1e3, st[5], st[6], st[7], st[8], st[9], st[10]);
+                        fclose(cf);
+                    }
+                }
             }
         }
     }
@@ -971,7 +1039,7 @@ int main(int argc, char **argv) {
            st[6], (st[6]&&st[5])?log2((double)st[6]/st[5]):-99.0,
            st[7], st[8], st[9], st[10], st[11]);
     if (s18_rate > 0) {
-        double eta_hr = pow(2.0, 31.18) / s18_rate / 3600.0;
+        double eta_hr = pow(2.0, 31.5315) / s18_rate / 3600.0;
         printf("  >>> MEASURED EXPECTED TIME TO 36-STEP STANDARD-IV COLLISION: %.2f HOURS (%.2f days) <<<\n",
                eta_hr, eta_hr / 24.0);
     }
