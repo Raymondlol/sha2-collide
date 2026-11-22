@@ -24,3 +24,6 @@ tools
 *.fls
 *.synctex.gz
 bench/bench_compress
+
+# Third-party reference PDFs (download from ePrint; see papers/README.md)
+papers/*.pdf
