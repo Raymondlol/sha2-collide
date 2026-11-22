@@ -9,7 +9,7 @@ Practical collision attacks on reduced-round SHA-2 — currently targeting the *
 | Li et al., CRYPTO 2026 (`ePrint 2026/1080`) | Practical (`2^{54}`, RTX 5060 Ti, 14d) | Theoretical (`2^{71}`) | Theoretical (`2^{136}`) |
 | Goldzweig (`ePrint 2026/2913`) | — | Practical (`2^{54.6}`, 440 GPU-h) | — |
 | Li et al., `ePrint 2026/1120` | — | Practical (`2^{57}`, Table 2) | **Theoretical (`2^{66.2}`)** — SFS only (Table 14) |
-| **This project (`sha2-collide`)** | — | — | **~`2^{49.6}` after L2 MitM (`31.18b` after Step 18) -> ~6–12 h projected on 1× RTX 5090** |
+| **This project (`sha2-collide`)** | — | — | **Measured on RTX 5090 (`v2`): `66.04 k s18/s` (`480 G pairs/s` P2) -> `10.23 h` expected (`7.09 h` median)!** |
 
 ## Verified Breakthroughs on `ePrint 2026/1120` Table 14 (Zero SAT Needed)
 

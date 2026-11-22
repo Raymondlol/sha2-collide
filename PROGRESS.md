@@ -41,7 +41,20 @@ All runs on `g916` (AMD Ryzen 9 9950X3D 16C/32T, 61 GiB RAM, 1× NVIDIA RTX 5090
      - `g = 6, k = 19` (`524,288` buckets, `16` lower entries/bucket = `128 B` = 1 L2 cache line, `5.93%` full Step-17 hit rate): `~10.25h` @ `100 G/s` (`~6–9h` with `16×64` shared-memory tiling).
      - `g = 7, k = 20` (`8` lower entries/bucket, `7.91%` full Step-17 hit rate): `~9.77h` @ `100 G/s` (`T1 = 2ms`).
 
-## Phase 4 — Next: Step B (RTX 5090 End-to-End Solver)
-- [ ] Implement `src/gpu/sha512_36_t14_gpu.cu` with sentinel self-test (injecting Table 14 to verify end-to-end collision capture).
-- [ ] Run 30s queued `gpu-run` verification & throughput benchmark on RTX 5090.
-- [ ] Launch full checkpointed `gpu-run` collision search for world-first practical 36-step Standard-IV SHA-512 collision.
+## Phase 4 — Step B: Real Silicon Verification & v2 Optimization on RTX 5090 (2026-11-22)
+
+- [x] Implemented `src/gpu/sha512_36_t14_gpu.cu` (compact active-bucket L2 table + `<=64-U` load-balanced chunks + real Standard-IV `M0` + 29-bit `E4` + full 36-step verifier).
+- [x] **v1 Benchmark (`c4ee760`, 30.00s via `gpu-run`)**:
+  - Sentinel self-test: **PASS 100%** (Table 14 injected -> exact 36-step collision captured `H1 == H2 == 0xf121c6371d1f7dae...`).
+  - Live Standard-IV sample (`seed=953`) independently bit-for-bit verified against `sha512_ref.py` through Round 18 (`dA16=dA17=dA18=0`, `dE18=0`).
+  - Speed: `5.78 ms/GM0` (`2.43 ms` Phase 1 + `3.33 ms` Phase 2), `228.08 G pairs/s` wall (`395.5 G pairs/s` pure Phase 2), `31.33 k s18/s` -> **`21.57 hours` ETA**.
+  - **Key diagnosis from live silicon**: measured `P(s18 | s17_full) = 2^{-18.72}` revealed **3 forced Step-18 direct bits on `E16`** (`E16[43]=1, E16[51]=0, E16[57]=0`, 100% necessary to cancel `S1(2^{57})` and avoid `Ch18` carry in Step 18!).
+- [x] **v2 Optimization (`aa31b0e`, 20.00s via `gpu-run`)**:
+  - Added `[43:1, 51:0, 57:0]` into `E16_DIRECT_MASK_15` + switched to optimal **`NEW15_k19_g3`** key (`61,365` active buckets, `30.0 MB` hot L2 in 96 MB L2, `99.0%` capture) + exact 4-bit `W5` identity in Phase 1 + 16-way `low4` `E4` unroll.
+  - Sentinel self-test: **PASS 100%**.
+  - **Real Silicon Measured Speed**:
+    - Timing: **`4.81 ms/GM0`** (`2.06 ms` Phase 1 [42.8%] + `2.74 ms` Phase 2 [57.0%], `GM0` = `0.02%`).
+    - Throughput: **`273.58 G pairs/s` wall-clock** (**`480.0 G pairs/s` pure Phase 2**), **`66.04 k full Step-18/s`** (**`2.11×` speedup over v1**, `P(s18 | pre) = 2^{-15.72}` exact).
+    - Live tail progression: `s18=1,320,815 -> s19=18,637 (2^{-6.15}) -> s20=85 (2^{-7.78}) -> s21=37 -> s22=21`.
+    - **Measured Expected Time to World-First 36-Step Standard-IV SHA-512 Collision: `10.23 HOURS` (`0.43 days`, median 50% hit = `7.09 hours`)!!**
+- [ ] Launch full checkpointed `gpu-run` collision search (`./src/gpu/sha512_36_t14_gpu --search --seed 0`).
