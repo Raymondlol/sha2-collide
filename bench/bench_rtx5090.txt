@@ -1,0 +1,15 @@
+[gpu] NVIDIA GeForce RTX 5090, 170 SMs
+[selftest] 36-step compress(IV, M0) == recorded CV  OK
+[selftest] 80-step SHA-512("abc") == FIPS vector    OK
+  R=36 rep 0: 265.2 ms, 2.151e+10 compressions/s
+  R=36 rep 1: 265.8 ms, 2.146e+10 compressions/s
+  R=36 rep 2: 265.8 ms, 2.146e+10 compressions/s
+  R=36 rep 3: 265.8 ms, 2.146e+10 compressions/s
+  R=36 rep 4: 266.6 ms, 2.140e+10 compressions/s
+  R=80 rep 0: 325.5 ms, 8.762e+09 compressions/s
+  R=80 rep 1: 325.5 ms, 8.762e+09 compressions/s
+  R=80 rep 2: 325.5 ms, 8.762e+09 compressions/s
+  R=80 rep 3: 325.5 ms, 8.762e+09 compressions/s
+  R=80 rep 4: 325.5 ms, 8.762e+09 compressions/s
+[result] 36-step: 2.151e+10 compressions/s (2^34.32 /s)
+[result] 80-step: 8.762e+09 compressions/s (2^33.03 /s)  ratio 36/80 = 2.45

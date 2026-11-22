@@ -24,7 +24,7 @@ We give a colliding message pair for SHA-512 reduced to 36 steps, starting from 
 (i)~counting the degrees of freedom and the uncontrolled conditions more precisely;
 (ii)~re-solving $(A_0,E_4)$ on the fly for each first block, which makes the cost of the first block negligible; and
 (iii)~a meet-in-the-middle lookup on 19~bits of $E_{16}$ whose table fits in the GPU's L2 cache.
-The collision was found after about 3~hours of wall-clock time on three NVIDIA Blackwell GPUs (one RTX~5090 and two RTX~PRO~6000), i.e.\ about $8.9$ GPU-hours. We estimate this at roughly $2^{49}$ 36-step compression-function evaluations. The measured stage-by-stage pass rates agree with the cost model; for example, the step-22 survivors that also satisfy $\delta W_{23}$ number 9, against 9.3 expected. We verified the pair with an independent implementation, and independently re-measured the tail probabilities on $2\cdot 10^{10}$ generated message pairs.
+The collision was found after about 3~hours of wall-clock time on three NVIDIA Blackwell GPUs (one RTX~5090 and two RTX~PRO~6000), i.e.\ about $8.9$ GPU-hours. At the compression-function throughput we measured on the same hardware, this equals about $2^{49.2}$ evaluations of the 36-step compression function. The measured stage-by-stage pass rates agree with the cost model; for example, the step-22 survivors that also satisfy $\delta W_{23}$ number 9, against 9.3 expected. We verified the pair with an independent implementation, and independently re-measured the tail probabilities on $2\cdot 10^{10}$ generated message pairs.
 \end{abstract}
 
 \paragraph{AI-use designation.} Predominantly AI-generated work. This work was developed with AI agents under the author's direction. Google Gemini~4 Neon, running in the Antigravity IDE, wrote the code and ran the experiments. Anthropic Claude Opus~5.5 contributed the initial exploration, the independent verification in Sect.~\ref{sec:verify}, and the writing. The author takes responsibility for the results and presentation.
@@ -48,7 +48,7 @@ Steps & Time & Status & Reference \\
 35 & $\approx 2^{54}$ & practical & \cite{LLWS26} \\
 36 & $2^{136}$ & theoretical & \cite{LLWS26} \\
 36 & $2^{66.2}$ & theoretical & \cite{LZLLQZ26} \\
-\textbf{36} & $\approx 2^{49}$ (measured; see Sect.~\ref{sec:compare}) & \textbf{practical} & \textbf{this work} \\
+\textbf{36} & $2^{49.2}$ (measured; see Sect.~\ref{sec:compare}) & \textbf{practical} & \textbf{this work} \\
 37 & $2^{87}$ & theoretical & \cite{LZLLQZ26} \\
 38 & $2^{125.4}$ & theoretical & \cite{LZLLQZ26} \\
 39 & $2^{178}$ & theoretical & \cite{LZLLQZ26} \\
@@ -61,7 +61,7 @@ For comparison, the 35-step practical collision for SHA-512 took about $2^{54}$ 
 \paragraph{Contributions.}
 \begin{itemize}
 \item A colliding message pair for 36-step SHA-512 with the standard IV (Table~\ref{tab:pair}). It satisfies the standard padding as well: two 256-byte messages with equal 36-step SHA-512 digests.
-\item A practical instantiation of the 36-step attack of~\cite{LZLLQZ26}. Three changes lower the expected cost from $2^{66.2}$ to about $2^{50}$ compression-function equivalents: a refined count of the degrees of freedom and conditions, on-the-fly re-solving of $(A_0,E_4)$ for each first block, and a meet-in-the-middle lookup resident in L2 (Sect.~\ref{sec:impl}).
+\item A practical instantiation of the 36-step attack of~\cite{LZLLQZ26}. Three changes lower the expected cost from $2^{66.2}$ to $2^{49.9}$ compression-function equivalents: a refined count of the degrees of freedom and conditions, on-the-fly re-solving of $(A_0,E_4)$ for each first block, and a meet-in-the-middle lookup resident in L2 (Sect.~\ref{sec:impl}).
 \item Measured stage-wise statistics from $2.04\cdot 10^{9}$ step-18 survivors, and an independent audit of the probabilistic tail (Sect.~\ref{sec:verify}).
 \end{itemize}
 We stress that the differential characteristic, the message-difference pattern and the attack framework are those of Li~et~al.~\cite{LZLLQZ26,LLWS26}. We also reuse the internal-state solution of their published 36-step semi-free-start pair~\cite[Table~14]{LZLLQZ26} instead of solving that part again. None of the techniques in Sect.~\ref{sec:impl} is new in itself.
@@ -231,11 +231,11 @@ $W_5$ bitwise test $\equiv$ $\sigma_0$ condition & exact & 0 mismatches in $1.28
 
 \section{Comparison with the $2^{66.2}$ estimate}\label{sec:compare}
 
-The estimate in~\cite{LZLLQZ26} counts calls to the compression function. The search up to the collision enumerated about $8.3\cdot 10^{15}\approx 2^{52.9}$ bucket-matched pairs. A pair check costs a handful of 64-bit integer operations, not a compression call. To convert, we assume a throughput of about $2.2\cdot 10^{10}$ 36-step SHA-512 compressions per second per GPU. We extrapolated this from public hashcat benchmarks of full SHA-512 on the RTX~5090 \todo{measure 36-step compression throughput directly on the RTX~5090 and replace this estimate}. On that basis, the 8.9 GPU-hours amount to roughly $2^{49}$ compression calls; the expected cost is about $2^{50}$. At the same throughput, $2^{66.2}$ compression calls would take about 39~years on the three GPUs. Table~\ref{tab:gap} gives an approximate attribution of the gap of about $2^{16}$--$2^{17}$.
+The estimate in~\cite{LZLLQZ26} counts calls to the compression function. The search up to the collision enumerated about $8.3\cdot 10^{15}\approx 2^{52.9}$ bucket-matched pairs. A pair check costs a handful of 64-bit integer operations, not a compression call. To convert between the two, we benchmarked a straightforward CUDA implementation of the 36-step compression function on the RTX~5090. Each thread compresses one block at a time, the message expansion is included, and all output words are consumed. It runs at $2.15\cdot 10^{10}$ compressions per second ($2^{34.3}$). The full 80-step function runs at $8.76\cdot 10^{9}$ per second, the same order as public hashcat figures for SHA-512. We did not benchmark the RTX~PRO~6000 directly; we assume it is $0.93$ times as fast, which is the ratio observed in the search itself. On the RTX~5090, one bucket-matched pair check thus costs $2^{-3.66}$ compression calls. The work up to the collision amounts to $6.6\cdot 10^{14}\approx 2^{49.2}$ compression calls, and the expected cost is $2^{53.51}\cdot 2^{-3.66}\approx 2^{49.9}$. At the same throughput, $2^{66.2}$ compression calls would take about 42~years on the three GPUs. Table~\ref{tab:gap} attributes the resulting gap of about $2^{16.4}$ approximately.
 
 \begin{table}[h]
 \centering
-\caption{Approximate attribution of the gap between $2^{66.2}$ and the expected cost of about $2^{50}$ (in bits).}
+\caption{Approximate attribution of the gap between $2^{66.2}$ and the expected cost of $2^{49.9}$ (in bits).}
 \label{tab:gap}
 \begin{tabular}{lr}
 \toprule
@@ -243,10 +243,10 @@ Source & bits \\
 \midrule
 Uncontrolled conditions recounted on real transitions ($66\to 62.2$) & $\approx 3.8$ \\
 Bucket-matched enumeration: $2^{62.2}$ combinations covered by $2^{53.5}$ enumerated pairs & $\approx 8.7$ \\
-Cost of one pair check, relative to one compression call (estimated) & $\approx 3.6$ \\
+Cost of one pair check, relative to one compression call (measured on RTX~5090) & $\approx 3.7$ \\
 First-block term $2^{63}$ removed by on-the-fly re-solving of $(A_0,E_4)$ & $\approx 0.2$ \\
 \midrule
-Total & $\approx 16.3$ \\
+Total & $\approx 16.4$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -257,7 +257,7 @@ The largest share comes from the standard meet-in-the-middle matching. The origi
 
 36-step SHA-512 with the standard IV is now practically broken: the collision took about 3~hours on three commodity Blackwell GPUs. The measured pass rates agree with the cost model to within statistical error. Full SHA-512 has 80 steps, and this result has no implication for its security. The next steps of the same family, 37~steps at $2^{87}$ and 38~steps at $2^{125.4}$~\cite{LZLLQZ26}, are outside the reach of the techniques used here; we have not tested whether similar refinements reduce those estimates.
 
-\paragraph{Data availability.} \todo{Public repository URL with the CUDA search code, the CPU audit, and the verification script.}
+\paragraph{Data availability.} The CUDA search code, the CPU audit, the compression benchmark and the verification script are available at \url{https://github.com/Raymondlol/sha2-collide}. \todo{The repository is currently private; make it public before posting.}
 
 \begin{thebibliography}{99}
 \bibitem{DEM15} C.~Dobraunig, M.~Eichlseder, F.~Mendel. Analysis of SHA-512/224 and SHA-512/256. ASIACRYPT 2015, LNCS, pp.~612--630. Springer, 2015.
