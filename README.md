@@ -17,8 +17,9 @@ Write-up: [`paper/sha512-36step-collision.pdf`](paper/sha512-36step-collision.pd
 | 36 | theoretical | 2^66.2 | Li, Zhang, Li, Liu, Qian, Zhu ([2026/1120](https://eprint.iacr.org/2026/1120)) |
 | **36** | **practical** | **≈ 2^49.2 measured (≈ 2^49.9 expected)** | **this repository** |
 | 37 / 38 / 39 | theoretical | 2^87 / 2^125.4 / 2^178 | [2026/1120](https://eprint.iacr.org/2026/1120) |
+| 38 / 39 | theoretical | 2^100.7 / 2^131.3 | Gong, Wei, Zhang, Wei ([2026/2867](https://eprint.iacr.org/2026/2867)) |
 
-For SHA-256, the latest practical standard-IV collisions are 36 steps ([2026/1120](https://eprint.iacr.org/2026/1120)) and 38 steps (Goldzweig, [2026/2913](https://eprint.iacr.org/2026/2913), found in 53 GPU-hours).
+For SHA-256, the latest practical standard-IV collisions are 36 steps ([2026/1120](https://eprint.iacr.org/2026/1120)) and 38 steps (Goldzweig, [2026/2913](https://eprint.iacr.org/2026/2913), found in 53 GPU-hours after 52,300 vCPU-hours of precomputation).
 
 ## The colliding pair
 
@@ -63,7 +64,7 @@ For SHA-256, the latest practical standard-IV collisions are 36 steps ([2026/112
 
 ## How the attack was made practical
 
-None of these techniques is new; together they bring the expected cost from 2^66.2 down to about 2^49.9 compression-function equivalents.
+None of these techniques is new. The expected cost is about 2^49.9 compression-function equivalents, against the estimate of 2^66.2. These techniques account for about 12.7 of the 16.4 bits; the other 3.7 bits reflect that a pair check costs less than a compression call (paper, Sect. 7).
 
 1. **Degrees of freedom in (W14, W15).** Four unconditioned bits of A14 give 16 values of W14. For each, a bit-level carry DP yields 2^21 values of W15, for 2^25 upper candidates in total. The paper counts 2^21.
 2. **Re-solving (A0, E4) on the fly.** A first block is kept if it meets the 14 conditions on E3, W6 and W7. For each kept block, the 29 unconditioned bits of E4 are swept: about 20.7M of the 2^29 variants (3.85%) meet all lower conditions. This makes the first-block cost negligible; the `2^63` term of the paper's estimate disappears.

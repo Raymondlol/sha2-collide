@@ -1,3 +1,4 @@
+# usage: python3 verify.py collision_36step_sha512_std_iv.json
 import json, sys, hashlib, struct
 M64 = (1 << 64) - 1
 def primes(n):
@@ -46,5 +47,6 @@ cv = compress(IV, M0, 36)
 assert M1 != M2 and compress(cv, M1, 36) == compress(cv, M2, 36)
 a = b"".join(x.to_bytes(8, "big") for x in M0 + M1)
 b = b"".join(x.to_bytes(8, "big") for x in M0 + M2)
-assert sha512r(a, 36) == sha512r(b, 36) and hashlib.sha512(a).digest() != hashlib.sha512(b).digest()
+assert sha512r(a, 36) == sha512r(b, 36)
+assert hashlib.sha512(a).digest() != hashlib.sha512(b).digest()
 print("36-step SHA-512 collision verified:", sha512r(a, 36).hex())
