@@ -6,7 +6,7 @@ The search ran on one RTX 5090 together with two RTX PRO 6000 (Blackwell). The R
 
 This is a practical instantiation of an existing attack, not a new one. It uses the 36-step differential characteristic, the message-difference pattern and the memory-efficient two-block framework of Li et al. ([ePrint 2026/1120](https://eprint.iacr.org/2026/1120), [ePrint 2026/1080](https://eprint.iacr.org/2026/1080)). It also reuses the internal-state solution of their published 36-step semi-free-start pair (2026/1120, Table 14). The paper estimates the attack at 2^66.2.
 
-Write-up: [`paper/sha512-36step-collision.pdf`](paper/sha512-36step-collision.pdf), LaTeX source in `paper/`.
+Paper: [Cryptology ePrint Archive, Paper 2026/2991](https://eprint.iacr.org/2026/2991). The same PDF is in [`paper/sha512-36step-collision.pdf`](paper/sha512-36step-collision.pdf), with the LaTeX source in `paper/`.
 
 ## Context: collision attacks on step-reduced SHA-512 (standard IV)
 
@@ -15,7 +15,7 @@ Write-up: [`paper/sha512-36step-collision.pdf`](paper/sha512-36step-collision.pd
 | 35 | practical | ≈ 2^54 (14 days on an RTX 5060 Ti) | Li, Liu, Wang, Shi, CRYPTO 2026 ([2026/1080](https://eprint.iacr.org/2026/1080)) |
 | 36 | theoretical | 2^136 | [2026/1080](https://eprint.iacr.org/2026/1080) |
 | 36 | theoretical | 2^66.2 | Li, Zhang, Li, Liu, Qian, Zhu ([2026/1120](https://eprint.iacr.org/2026/1120)) |
-| **36** | **practical** | **≈ 2^49.2 measured (≈ 2^49.9 expected)** | **this repository** |
+| **36** | **practical** | **≈ 2^49.2 measured (≈ 2^49.9 expected)** | **this repository ([2026/2991](https://eprint.iacr.org/2026/2991))** |
 | 37 / 38 / 39 | theoretical | 2^87 / 2^125.4 / 2^178 | [2026/1120](https://eprint.iacr.org/2026/1120) |
 | 38 / 39 | theoretical | 2^100.7 / 2^131.3 | Gong, Wei, Zhang, Wei ([2026/2867](https://eprint.iacr.org/2026/2867)) |
 
@@ -101,6 +101,18 @@ PROGRESS.md   chronological log
 python3 results/verify_world_first.py
 python3 paper/verify_appendix.py results/collision_36step_sha512_std_iv.json
 python3 cores/verify_table14.py
+```
+
+## Citation
+
+```bibtex
+@misc{cryptoeprint:2026/2991,
+  author       = {Junhong Huang},
+  title        = {A Practical Collision for 36-Step {SHA}-512},
+  howpublished = {Cryptology {ePrint} Archive, Paper 2026/2991},
+  year         = {2026},
+  url          = {https://eprint.iacr.org/2026/2991}
+}
 ```
 
 ## AI-use designation
