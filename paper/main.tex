@@ -13,28 +13,28 @@
 
 \title{A Practical Collision for 36-Step SHA-512}
 \author{Junhong Huang\\ Boston University \quad \href{mailto:raymxnd@bu.edu}{\texttt{raymxnd@bu.edu}}}
-\date{22 November 2026}
+\date{22 November 2026; revised 26 November 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We give a colliding message pair for SHA-512 reduced to 36 steps, starting from the standard initial value. To our knowledge it is the first practical collision for 36-step SHA-512; the previous practical record was 35 steps~\cite{LLWS26}. The attack is not new. It uses the 36-step differential characteristic and the memory-efficient two-block framework of Li~et~al.~\cite{LZLLQZ26}, whose estimated time complexity is $2^{66.2}$. Our contribution is to make it practical by:
+We give a colliding message pair for SHA-512 reduced to 36 steps, starting from the standard initial value. The first such pair was published by Yuan and Yu on 18 November 2026~\cite{YY26}; we found ours independently four days later. The previous practical record had been 35 steps~\cite{LLWS26}. The attack is not new. It uses the 36-step differential characteristic and the memory-efficient two-block framework of Li~et~al.~\cite{LZLLQZ26}, whose estimated time complexity is $2^{66.2}$. Our contribution is to make it practical by:
 (i)~counting the degrees of freedom and the uncontrolled conditions more precisely;
 (ii)~re-solving $(A_0,E_4)$ on the fly for each first block, which makes the cost of the first block negligible; and
 (iii)~a meet-in-the-middle lookup on 19~bits of $E_{16}$ whose table fits in the GPU's L2 cache.
-The collision was found after about 3~hours of wall-clock time on three NVIDIA Blackwell GPUs (one RTX~5090 and two RTX~PRO~6000), i.e.\ about $8.9$ GPU-hours. At the compression-function throughput we measured on the same hardware, this equals about $2^{49.2}$ evaluations of the 36-step compression function. The measured stage-by-stage pass rates agree with the cost model; for example, the step-22 survivors that also satisfy $\delta W_{23}$ number 9, against 9.3 expected. We verified the pair with an independent implementation, and independently re-measured the tail probabilities on $2\cdot 10^{10}$ generated message pairs.
+The collision was found after about 3~hours of wall-clock time on three NVIDIA Blackwell GPUs (one RTX~5090 and two RTX~PRO~6000), i.e.\ about $8.9$ GPU-hours; Yuan and Yu report a similar expected cost and found their pair on 8{,}960 CPU cores in 16.9 hours. At the compression-function throughput we measured on the same hardware, this equals about $2^{49.2}$ evaluations of the 36-step compression function. The measured stage-by-stage pass rates agree with the cost model; for example, the step-22 survivors that also satisfy $\delta W_{23}$ number 9, against 9.3 expected. We verified the pair with an independent implementation, and independently re-measured the tail probabilities on $2\cdot 10^{10}$ generated message pairs.
 \end{abstract}
 
 \paragraph{AI-use designation.} Predominantly AI-generated work. This work was developed with AI agents under the author's direction. Google Gemini~4 Neon, running in the Antigravity IDE, wrote the code and ran the experiments. Anthropic Claude Opus~5.5 contributed the initial exploration, the independent verification in Sect.~\ref{sec:verify}, and the writing. The author takes responsibility for the results and presentation.
 
 \section{Introduction}
 
-SHA-512~\cite{FIPS180} has 80 steps. Collision attacks on step-reduced SHA-2 measure its security margin. Since 2024, automated searches for signed differential characteristics have combined with memory-efficient two-block frameworks, and the reach of these attacks has grown quickly~\cite{LLW24a,LLWDS24,LLWQJK25,LLWS26,LZLLQZ26,GWZW26}. Table~\ref{tab:sota} summarizes the collision attacks on SHA-512 with the standard IV, using the list in~\cite[Table~1]{LZLLQZ26}.
+SHA-512~\cite{FIPS180} has 80 steps. Collision attacks on step-reduced SHA-2 measure its security margin. Since 2024, automated searches for signed differential characteristics have combined with memory-efficient two-block frameworks, and the reach of these attacks has grown quickly~\cite{LLW24a,LLWDS24,LLWQJK25,LLWS26,LZLLQZ26,GWZW26,YY26}. Table~\ref{tab:sota} summarizes the collision attacks on SHA-512 with the standard IV, using the list in~\cite[Table~1]{LZLLQZ26}.
 
 \begin{table}[h]
 \centering
-\caption{Collision attacks on step-reduced SHA-512 with the standard IV (after~\cite[Table~1]{LZLLQZ26}, updated with~\cite{GWZW26}). Time is in calls to the compression function.}
+\caption{Collision attacks on step-reduced SHA-512 with the standard IV (after~\cite[Table~1]{LZLLQZ26}, updated with~\cite{GWZW26,YY26}). Time is in calls to the compression function.}
 \label{tab:sota}
 \begin{tabular}{rlll}
 \toprule
@@ -47,21 +47,27 @@ Steps & Time & Status & Reference \\
 35 & $\approx 2^{54}$ & practical & \cite{LLWS26} \\
 36 & $2^{136}$ & theoretical & \cite{LLWS26} \\
 36 & $2^{66.2}$ & theoretical & \cite{LZLLQZ26} \\
+36 & $2^{49.8}$ (expected; pair published 18 Nov.\ 2026) & practical & \cite{YY26} \\
 \textbf{36} & $2^{49.2}$ (measured; see Sect.~\ref{sec:compare}) & \textbf{practical} & \textbf{this work} \\
 37 & $2^{87}$ & theoretical & \cite{LZLLQZ26} \\
+37 & $2^{75.0}$ & theoretical & \cite{YY26} \\
 38 & $2^{125.4}$ & theoretical & \cite{LZLLQZ26} \\
 38 & $2^{100.7}$ & theoretical & \cite{GWZW26} \\
+38 & $2^{99.0}$ & theoretical & \cite{YY26} \\
 39 & $2^{178}$ & theoretical & \cite{LZLLQZ26} \\
 39 & $2^{131.3}$ & theoretical & \cite{GWZW26} \\
+39 & $2^{128.6}$ & theoretical & \cite{YY26} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 For comparison, the 35-step practical collision for SHA-512 took about $2^{54}$ work and 14~days on one RTX~5060~Ti~\cite{LLWS26}. For SHA-256, Goldzweig recently gave a 38-step collision from the standard IV, found in 53~GPU-hours after 52{,}300 vCPU-hours of precomputation~\cite{Gol26}.
 
+\paragraph{Earlier independent work.} Yuan and Yu~\cite{YY26} published a colliding pair for 36-step SHA-512 with the standard IV on GitHub on 18 November 2026, four days before ours, and describe their attack in ePrint 2026/3005. We were not aware of it when we released our pair on 22 November 2026 and posted the first version of this paper, which wrongly called our pair the first. Both attacks use the characteristic and the fixed core of~\cite{LZLLQZ26}, and both pairs use a value of $W_{14}$ outside the $2^{21}$ upper candidates of~\cite{LZLLQZ26}. The methods differ. Yuan and Yu build a coordinated front--rear time--memory tradeoff with 7.05\,GiB of tables, reach an expected online cost of $2^{49.8}$, and found their pair on 8{,}960 CPU cores in 16.9 hours. Our search uses a 30\,MB lookup table held in the GPU's L2 cache and found its pair on three GPUs in about 3 hours. Their paper also improves the attacks on 37, 38 and 39 steps. We checked their pair~\cite[Table~7]{YY26} with our own implementation of SHA-512 (Sect.~\ref{sec:verify}); it is a valid 36-step collision.
+
 \paragraph{Contributions.}
 \begin{itemize}
-\item A colliding message pair for 36-step SHA-512 with the standard IV (Table~\ref{tab:pair}). It satisfies the standard padding as well: two 256-byte messages with equal 36-step SHA-512 digests.
+\item A colliding message pair for 36-step SHA-512 with the standard IV (Table~\ref{tab:pair}), found independently of the earlier pair of~\cite{YY26}. It satisfies the standard padding as well: two 256-byte messages with equal 36-step SHA-512 digests.
 \item A practical instantiation of the 36-step attack of~\cite{LZLLQZ26}. Its expected cost is $2^{49.9}$ compression-function equivalents, against the estimate of $2^{66.2}$. Three changes account for about 12.7 of the 16.4 bits: a refined count of the degrees of freedom and conditions, on-the-fly re-solving of $(A_0,E_4)$ for each first block, and a meet-in-the-middle lookup resident in L2 (Sect.~\ref{sec:impl}). The remaining 3.7 bits reflect that a pair check costs less than a compression call (Sect.~\ref{sec:compare}).
 \item Measured stage-wise statistics from $2.04\cdot 10^{9}$ step-18 survivors, and an independent audit of the probabilistic tail (Sect.~\ref{sec:verify}).
 \end{itemize}
@@ -211,7 +217,7 @@ With standard padding, the 256-byte messages $M_0\|M_1$ and $M_0\|M_1'$ have the
 \item both messages compress to the same $H$;
 \item the padded 256-byte messages collide as well, while their full 80-step SHA-512 digests differ.
 \end{itemize}
-The script is given in Appendix~\ref{app:verify}.
+The script is given in Appendix~\ref{app:verify}. The same checks pass for the pair of Yuan and Yu~\cite[Table~7]{YY26}: its chaining value, 36-step output and padded digest match their table, and its blocks differ in the same seven words.
 
 \paragraph{The tail model.} The $\delta W_{23}$ and $\delta W_{25}$ conditions depend only on the message words. Their probabilities could therefore be biased by the way the search constructs its candidates. They could also be correlated with the state conditions of steps 17--22. To test both, a separate CPU program generates candidate pairs exactly as the search does: golden first blocks, then random $E_4$ variants, then random upper candidates. Given message~1's real state and the characteristic's modular state difference before each step $t$, it checks whether step $t$ reproduces the characteristic's difference. Table~\ref{tab:audit} summarizes $2\cdot 10^{10}$ such pairs. The conditional probabilities of $\delta W_{23}$ given steps 17, 19, 20, 21 and 22 all lie within $2^{-11.50}$ to $2^{-11.56}$ (standard errors 0.001--0.10 bits). Very few random pairs satisfy the step-17/18 conditions, so the conditioning on those steps is only checked to about $\pm 0.1$ bit.
 
@@ -258,7 +264,7 @@ The largest share comes from the standard meet-in-the-middle matching. The origi
 
 \section{Conclusion}
 
-36-step SHA-512 with the standard IV is now practically broken: the collision took about 3~hours on three commodity Blackwell GPUs. The measured pass rates agree with the cost model to within statistical error. Full SHA-512 has 80 steps, and this result has no implication for its security. The next steps of the same family, 37~steps at $2^{87}$~\cite{LZLLQZ26} and 38~steps at $2^{100.7}$~\cite{GWZW26}, are outside the reach of the techniques used here; we have not tested whether similar refinements reduce those estimates.
+36-step SHA-512 with the standard IV is now practically broken. Yuan and Yu~\cite{YY26} found the first collision on a CPU cluster; our independent collision took about 3~hours on three commodity Blackwell GPUs. The measured pass rates agree with the cost model to within statistical error. Full SHA-512 has 80 steps, and this result has no implication for its security. The next steps of the same family, 37~steps at $2^{75.0}$ and 38~steps at $2^{99.0}$~\cite{YY26}, are outside the reach of the techniques used here; we have not tested whether similar refinements reduce those estimates.
 
 \paragraph{Data availability.} The CUDA search code, the CPU audit, the compression benchmark and the verification script are available at \url{https://github.com/Raymondlol/sha2-collide}.
 
@@ -272,6 +278,7 @@ The largest share comes from the standard meet-in-the-middle matching. The origi
 \bibitem{LLWQJK25} Y.~Li, F.~Liu, G.~Wang, H.~Qian, K.~Jia, X.~Kong. New collision attacks on round-reduced SHA-512. CRYPTO 2025, LNCS, pp.~200--229. Springer, 2025.
 \bibitem{LLWS26} Y.~Li, F.~Liu, G.~Wang, J.~Shi. Pushing the limit of memory-efficient collision attack framework for SHA-2. CRYPTO 2026. Cryptology ePrint Archive, Paper 2026/1080, 2026.
 \bibitem{LZLLQZ26} Y.~Li, Z.~Zhang, M.~Li, F.~Liu, H.~Qian, J.~Zhu. Pushing collision attacks on SHA-2 to 39 steps. Cryptology ePrint Archive, Paper 2026/1120, 2026.
+\bibitem{YY26} S.~Yuan, H.~Yu. Time--memory tradeoffs for message modification in step-reduced SHA-512. Cryptology ePrint Archive, Paper 2026/3005, 2026. Colliding pair first published at \url{https://github.com/gnyst001/sha512-36-collision}, 18 November 2026.
 \end{thebibliography}
 
 \clearpage

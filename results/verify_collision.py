@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Clean-room, zero-dependency FIPS 180-4 independent verifier for the
-World-First Practical 36-Step Standard-IV SHA-512 Collision.
+Practical 36-Step Standard-IV SHA-512 Collision.
 
 Derives SHA-512 IV and K[0..79] directly from first 8 / 80 primes,
 cross-validates full 80-round SHA-512 against Python stdlib hashlib.sha512,
@@ -171,7 +171,7 @@ def main():
     active_w = [t for t in range(36) if W1[t] != W2[t]]
     active_steps = [t for t in range(1, 37) if st1[t] != st2[t]]
     print(f"[PASS 5/5] Differential check: differing M words={diff_words} | active W steps={active_w[0]}..{active_w[-1]} ({len(active_w)} words) | active state steps={active_steps[0]}..{active_steps[-1]} (zero from step {active_steps[-1]+1}..36)")
-    print("\nALL 5/5 CLEAN-ROOM FIPS 180-4 CHECKS PASSED! WORLD-FIRST 36-STEP STANDARD-IV SHA-512 COLLISION CONFIRMED!")
+    print("\nALL 5/5 CLEAN-ROOM FIPS 180-4 CHECKS PASSED! 36-STEP STANDARD-IV SHA-512 COLLISION CONFIRMED.")
 
 
 if __name__ == "__main__":

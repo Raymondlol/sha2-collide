@@ -1,4 +1,4 @@
-// World-First Practical 36-step Standard-IV SHA-512 Collision Finder (RTX 5090 sm_120)
+// Practical 36-step Standard-IV SHA-512 Collision Finder (RTX 5090 sm_120)
 // Core: ePrint 2026/1120 Table 14 (i=1, k=59, dE15=0, wt(dE16)=3, wt(dE17)=3)
 // v2 Optimizations (measured 2x+ speedup over v1):
 //   1. Exact 15-direct-bit E16 filter (12 Step-17 bits + 3 Step-18 forced bits [43:1, 51:0, 57:0]):
@@ -970,7 +970,7 @@ int main(int argc, char **argv) {
                     double wall_hit = std::chrono::duration<double>(std::chrono::steady_clock::now() - t_wall0).count();
                     CollisionRec h_col;
                     CUDA_CHECK(cudaMemcpy(&h_col, d_col, sizeof(CollisionRec), cudaMemcpyDeviceToHost));
-                    print_collision(h_col, "WORLD-FIRST 36-STEP STANDARD-IV SHA-512 COLLISION!!");
+                    print_collision(h_col, "36-STEP STANDARD-IV SHA-512 COLLISION FOUND");
                     save_collision_json(h_col, out_path, wall_hit, total_batches);
                     done = true;
                     break;

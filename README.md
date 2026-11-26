@@ -2,6 +2,8 @@
 
 **A practical collision for 36-step SHA-512 with the standard IV** (found 2026-11-22).
 
+**Not the first.** Yuan and Yu published a 36-step SHA-512 collision four days earlier ([their pair](https://github.com/gnyst001/sha512-36-collision), public 2026-11-18; paper: [ePrint 2026/3005](https://eprint.iacr.org/2026/3005)). The pair here was found independently. We learned of their work on 2026-11-26 and revised the paper accordingly.
+
 The search ran on one RTX 5090 together with two RTX PRO 6000 (Blackwell). The RTX 5090 found the pair after 2.81 h; the three GPUs spent about 8.9 GPU-hours in total. At the measured RTX 5090 throughput this is about 2^49.2 evaluations of the 36-step compression function.
 
 This is a practical instantiation of an existing attack, not a new one. It uses the 36-step differential characteristic, the message-difference pattern and the memory-efficient two-block framework of Li et al. ([ePrint 2026/1120](https://eprint.iacr.org/2026/1120), [ePrint 2026/1080](https://eprint.iacr.org/2026/1080)). It also reuses the internal-state solution of their published 36-step semi-free-start pair (2026/1120, Table 14). The paper estimates the attack at 2^66.2.
@@ -15,9 +17,11 @@ Paper: [Cryptology ePrint Archive, Paper 2026/2991](https://eprint.iacr.org/2026
 | 35 | practical | ≈ 2^54 (14 days on an RTX 5060 Ti) | Li, Liu, Wang, Shi, CRYPTO 2026 ([2026/1080](https://eprint.iacr.org/2026/1080)) |
 | 36 | theoretical | 2^136 | [2026/1080](https://eprint.iacr.org/2026/1080) |
 | 36 | theoretical | 2^66.2 | Li, Zhang, Li, Liu, Qian, Zhu ([2026/1120](https://eprint.iacr.org/2026/1120)) |
+| 36 | practical | 2^49.8 expected (7.05 GiB; 8,960 CPU cores, 16.9 h) | Yuan, Yu ([2026/3005](https://eprint.iacr.org/2026/3005)), pair published 2026-11-18 |
 | **36** | **practical** | **≈ 2^49.2 measured (≈ 2^49.9 expected)** | **this repository ([2026/2991](https://eprint.iacr.org/2026/2991))** |
 | 37 / 38 / 39 | theoretical | 2^87 / 2^125.4 / 2^178 | [2026/1120](https://eprint.iacr.org/2026/1120) |
 | 38 / 39 | theoretical | 2^100.7 / 2^131.3 | Gong, Wei, Zhang, Wei ([2026/2867](https://eprint.iacr.org/2026/2867)) |
+| 37 / 38 / 39 | theoretical | 2^75.0 / 2^99.0 / 2^128.6 | Yuan, Yu ([2026/3005](https://eprint.iacr.org/2026/3005)) |
 
 For SHA-256, the latest practical standard-IV collisions are 36 steps ([2026/1120](https://eprint.iacr.org/2026/1120)) and 38 steps (Goldzweig, [2026/2913](https://eprint.iacr.org/2026/2913), found in 53 GPU-hours after 52,300 vCPU-hours of precomputation).
 
@@ -98,7 +102,7 @@ PROGRESS.md   chronological log
 ## Quick verification
 
 ```bash
-python3 results/verify_world_first.py
+python3 results/verify_collision.py
 python3 paper/verify_appendix.py results/collision_36step_sha512_std_iv.json
 python3 cores/verify_table14.py
 ```
