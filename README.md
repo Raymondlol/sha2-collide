@@ -2,7 +2,7 @@
 
 **A practical collision for 36-step SHA-512 with the standard IV** (found 2026-11-22).
 
-**Not the first.** Yuan and Yu published a 36-step SHA-512 collision four days earlier ([their pair](https://github.com/gnyst001/sha512-36-collision), public 2026-11-18; paper: [ePrint 2026/3005](https://eprint.iacr.org/2026/3005)). The pair here was found independently. We learned of their work on 2026-11-26 and revised the paper accordingly.
+Yuan and Yu published the first 36-step SHA-512 collision on 2026-11-18 ([their pair](https://github.com/gnyst001/sha512-36-collision); paper: [ePrint 2026/3005](https://eprint.iacr.org/2026/3005)). The pair here was found independently four days later.
 
 The search ran on one RTX 5090 together with two RTX PRO 6000 (Blackwell). The RTX 5090 found the pair after 2.81 h; the three GPUs spent about 8.9 GPU-hours in total. At the measured RTX 5090 throughput this is about 2^49.2 evaluations of the 36-step compression function.
 

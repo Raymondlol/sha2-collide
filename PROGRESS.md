@@ -1,6 +1,6 @@
 # Progress Log — `sha2-collide`
 
-> **Correction (2026-11-26).** The "world-first" wording below is wrong. Yuan and Yu published a 36-step SHA-512 collision on 2026-11-18 (https://github.com/gnyst001/sha512-36-collision; ePrint 2026/3005), four days before this one. This log is kept as written at the time, apart from this note and the renamed verifier.
+> **Note (2026-11-26).** Yuan and Yu published an independent 36-step SHA-512 collision on 2026-11-18 (https://github.com/gnyst001/sha512-36-collision; ePrint 2026/3005), four days before this one. This log is kept as written at the time, apart from this note and the renamed verifier.
 
 All runs on `g916` (AMD Ryzen 9 9950X3D 16C/32T, 61 GiB RAM, 1× NVIDIA RTX 5090 32 GiB GDDR7 / 96 MB L2, CUDA 13.0).
 
